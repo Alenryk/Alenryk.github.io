@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Manager</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 90%;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #555;
+        }
+        input, textarea, button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .event-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .event-card h3 {
+            margin-top: 0;
+        }
+        .tags {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .tag {
+            background-color: #e1ecf4;
+            color: #39739d;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+        .attendance-buttons button {
+            margin: 2px;
+            width: auto;
+        }
+        .attendance-stats {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        /* Teilnehmerliste modernisieren */
+		.participant-list {
+			margin-top: 10px;
+			font-size: 0.85em;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			opacity: 0;
+			max-height: 0;
+			overflow: hidden;
+			transition: opacity 0.3s ease, max-height 0.3s ease;
+		}
+
+		.participant-list.visible {
+			opacity: 1;
+			max-height: 500px; /* max-height für die Animation */
+		}
+
+		.participant-item {
+			background-color: #f1f8ff;
+			border-radius: 8px;
+			padding: 8px 12px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.participant-item .name {
+			font-weight: bold;
+			color: #39739d;
+		}
+		.participant-item .remove-button:hover {
+			background-color: #c82333;
+		}
+        .archive {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Manager</h1>
+
+        <!-- Event erstellen -->
+        <div class="section">
+            <h2>Event erstellen</h2>
+            <input id="title" type="text" placeholder="Titel" required>
+            <input id="startDate" type="date" placeholder="Startdatum" required>
+            <input id="endDate" type="date" placeholder="Enddatum (optional)">
+            <input id="location" type="text" placeholder="Ort (optional)">
+            <textarea id="description" placeholder="Beschreibung (optional)"></textarea>
+            <input id="tags" type="text" placeholder="Tags (kommagetrennt, optional)">
+            <button onclick="addEvent()">Event hinzufügen</button>
+        </div>
+		
+		<div id="editContainer"></div>
+
+        <!-- Zukünftige Events -->
+        <div class="section">
+            <h2>Zukünftige Events</h2>
+            <div id="futureEvents" class="event-grid"></div>
+        </div>
+
+        <!-- Vergangene Events -->
+        <div class="section archive">
+            <h2>Archivierte Events</h2>
+            <div id="pastEvents" class="event-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+
+        function renderEvents() {
+			const futureEvents = document.getElementById('futureEvents');
+			const pastEvents = document.getElementById('pastEvents');
+			futureEvents.innerHTML = '';
+			pastEvents.innerHTML = '';
+
+			const now = new Date().toISOString().split('T')[0];
+
+			const sortedEvents = events.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+			sortedEvents.forEach((event, index) => {
+				const card = document.createElement('div');
+				card.className = 'event-card';
+				card.innerHTML = `
+					<h3>${event.title}</h3>
+					<p><strong>Startdatum:</strong> ${formatDate(event.startDate)}</p>
+					${event.endDate ? `<p><strong>Enddatum:</strong> ${formatDate(event.endDate)}</p>` : ''}
+					${event.location ? `<p><strong>Ort:</strong> {event.location}</p>` : ''}
+					${event.description ? `<p>${event.description}</p>` : ''}
+					${event.tags && event.tags.length > 0 ? `<div class="tags">${event.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+					<button onclick="editEvent(${index})" style="background-color: #28a745;">Event bearbeiten</button>
+					<div class="attendance-buttons">
+						<button onclick="updateAttendance(${index}, 'yes')">Zusage</button>
+						<button onclick="updateAttendance(${index}, 'no')">Absage</button>
+						<button onclick="updateAttendance(${index}, 'maybe')">Vielleicht</button>
+					</div>
+					<div class="attendance-stats">
+						👍🏼: ${event.attendance.yes.length} 
+						👎🏼: ${event.attendance.no.length} 
+						🤔: ${event.attendance.maybe.length}
+					</div>
+					<button onclick="toggleParticipantList(${index})">Teilnehmer anzeigen</button>
+					<div class="participant-list" id="participant-list-${index}">
+						${renderParticipants(event.attendance.yes, 'Zusage')}
+						${renderParticipants(event.attendance.no, 'Absage')}
+						${renderParticipants(event.attendance.maybe, 'Vielleicht')}
+					</div>
+					<button onclick="deleteEvent(${index})" style="background-color: #dc3545;">Event löschen</button>
+				`;
+				if (event.startDate >= now) {
+					futureEvents.appendChild(card);
+				} else {
+					pastEvents.appendChild(card);
+				}
+			});
+		}
+
+		// Funktion zur Darstellung der Teilnehmer
+		function renderParticipants(participants, status) {
+			if (participants.length === 0) return ''; // Wenn keine Teilnehmer, nichts anzeigen
+			return `
+				<div><strong>${status}:</strong></div>
+				${participants.map(name => `
+					<div class="participant-item">
+						<span class="name">${name}</span>
+					</div>
+				`).join('')}
+			`;
+		}
+
+		function toggleParticipantList(index) {
+			const list = document.getElementById(`participant-list-${index}`);
+			list.classList.toggle('visible');
+		}
+
+		function removeParticipant(name) {
+			const eventIndex = events.findIndex(event => {
+				return event.attendance.yes.includes(name) || event.attendance.no.includes(name) || event.attendance.maybe.includes(name);
+			});
+
+			if (eventIndex !== -1) {
+				const attendance = events[eventIndex].attendance;
+				if (attendance.yes.includes(name)) {
+					attendance.yes = attendance.yes.filter(participant => participant !== name);
+				} else if (attendance.no.includes(name)) {
+					attendance.no = attendance.no.filter(participant => participant !== name);
+				} else if (attendance.maybe.includes(name)) {
+					attendance.maybe = attendance.maybe.filter(participant => participant !== name);
+				}
+
+				localStorage.setItem('events', JSON.stringify(events));
+				renderEvents(); // Aktualisiere die Anzeige
+			}
+		}
+
+        function addEvent() {
+            const title = document.getElementById('title').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const location = document.getElementById('location').value;
+            const description = document.getElementById('description').value;
+            const tags = document.getElementById('tags').value.trim().split(',').map(tag => tag.trim()).filter(tag => tag);
+
+			
+			if (!title || !startDate) {
+					alert('Bitte Titel und Startdatum angeben!');
+					return;
+			}
+			const newEvent = {
+				title,
+				startDate,
+				endDate,
+				location,
+				description,
+				tags,
+				attendance: { yes: [], no: [], maybe: [] }
+			}
+			
+			events.push(newEvent);
+			localStorage.setItem('events', JSON.stringify(events));
+			renderEvents();
+			
+			// Eingabefelder leeren
+			document.getElementById('title').value = '';
+			document.getElementById('startDate').value = '';
+			document.getElementById('endDate').value = '';
+			document.getElementById('location').value = '';
+			document.getElementById('description').value = '';
+			document.getElementById('tags').value = '';
+        }
+
+        function updateAttendance(index, type) {
+            const name = prompt('Bitte deinen Namen eingeben:');
+            if (name) {
+                const attendance = events[index].attendance;
+                attendance.yes = attendance.yes.filter(participant => participant !== name);
+                attendance.no = attendance.no.filter(participant => participant !== name);
+                attendance.maybe = attendance.maybe.filter(participant => participant !== name);
+
+                attendance[type].push(name);
+
+                localStorage.setItem('events', JSON.stringify(events));
+                renderEvents();
+            }
+        }
+
+        function deleteEvent(index) {
+            if (confirm('Möchtest du dieses Event wirklich löschen?')) {
+                events.splice(index, 1);
+                localStorage.setItem('events', JSON.stringify(events));
+                renderEvents();
+            }
+        }
+		
+		function editEvent(index) {
+			const event = events[index];
+			const formHTML = `
+				<div id="editEventForm">
+					<h3>Event bearbeiten</h3>
+					<label for="editTitle">Titel:</label>
+					<input type="text" id="editTitle" value="${event.title}" required><br>
+					<label for="editStartDate">Startdatum:</label>
+					<input type="date" id="editStartDate" value="${event.startDate}" required><br>
+					<label for="editEndDate">Enddatum (optional):</label>
+					<input type="date" id="editEndDate" value="${event.endDate || ''}"><br>
+					<label for="editLocation">Ort (optional):</label>
+					<input type="text" id="editLocation" value="${event.location || ''}"><br>
+					<label for="editDescription">Beschreibung (optional):</label>
+					<textarea id="editDescription">${event.description || ''}</textarea><br>
+					<label for="editTags">Tags (optional):</label>
+					<input type="text" id="editTags" value="${event.tags.join(', ') || ''}"><br>
+					<button onclick="saveEditedEvent(${index})">Speichern</button>
+					<button onclick="cancelEdit()">Abbrechen</button>
+				</div>
+			`;
+
+			const editContainer = document.getElementById('editContainer');
+			editContainer.innerHTML = formHTML;
+		}
+
+		function cancelEdit() {
+			const editContainer = document.getElementById('editContainer');
+			editContainer.innerHTML = ''; // Formular zurücksetzen
+		}
+		
+		function saveEditedEvent(index) {
+			const updatedTitle = document.getElementById('editTitle').value;
+			const updatedStartDate = document.getElementById('editStartDate').value;
+			const updatedEndDate = document.getElementById('editEndDate').value;
+			const updatedLocation = document.getElementById('editLocation').value;
+			const updatedDescription = document.getElementById('editDescription').value;
+			const updatedTags = document.getElementById('editTags').value.split(',').map(tag => tag.trim());
+
+			// Event-Daten aktualisieren
+			events[index] = {
+				...events[index],
+				title: updatedTitle,
+				startDate: updatedStartDate,
+				endDate: updatedEndDate || null,
+				location: updatedLocation || null,
+				description: updatedDescription || null,
+				tags: updatedTags
+			};
+
+			// Änderungen im Local Storage speichern
+			localStorage.setItem('events', JSON.stringify(events));
+
+			// Event-Daten neu rendern
+			renderEvents();
+
+			// Formular schließen
+			cancelEdit();
+		}
+		
+		// Funktion zur Formatierung des Datums im deutschen Format (DD.MM.YYYY)
+		function formatDate(dateString) {
+			const date = new Date(dateString);
+			const day = String(date.getDate()).padStart(2, '0');  // Führende Null für den Tag
+			const month = String(date.getMonth() + 1).padStart(2, '0');  // Führende Null für den Monat (Monate beginnen bei 0)
+			const year = date.getFullYear();  // Jahr bleibt gleich
+
+			return `${day}.${month}.${year}`;  // Format: DD.MM.YYYY
+		}
+
+        renderEvents();
+    </script>
+</body>
+</html>
