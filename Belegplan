@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Miniparadice Belegplan</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    .tab-buttons {
+      margin-bottom: 15px;
+    }
+
+    .tab-buttons button {
+      padding: 10px 20px;
+      margin-right: 5px;
+      cursor: pointer;
+      border: none;
+      background: #ccc;
+      border-radius: 5px 5px 0 0;
+      transition: background-color 0.3s;
+    }
+
+    .tab-buttons button.active {
+      background: #444;
+      color: white;
+      font-weight: bold;
+      border: 2px solid #333;
+    }
+
+    .tab-content {
+      display: none;
+      overflow-x: auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      margin-bottom: 40px;
+      min-width: 1200px; /* Mindestbreite für horizontales Scrollen */
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+      vertical-align: top;
+      font-size: 12px;
+    }
+
+    th {
+      background-color: #eee;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    td:first-child, th:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #f4f4f4;
+      z-index: 1;
+    }
+
+    /* Tischfarben */
+    .tisch-header:nth-child(2) { background-color: #c16666; } /* Khorne */
+    .tisch-header:nth-child(3) { background-color: #D5A6BD; } /* Slaanesh */
+    .tisch-header:nth-child(4) { background-color: #C9DAF8; } /* Tzeentch */
+    .tisch-header:nth-child(5) { background-color: #B6D7A8; } /* Nurgle */
+    .tisch-header:nth-child(6) { background-color: #B7B7B7; } /* Undivided */
+
+    /* Zeit-Slot Farbabstufungen je Tisch */
+	.zeit-header:nth-child(1), .zeit-header:nth-child(2) {
+	  background-color: #efcfcf; /* Khorne */
+	}
+	.zeit-header:nth-child(3), .zeit-header:nth-child(4) {
+	  background-color: #f3dbe8; /* Slaanesh */
+	}
+	.zeit-header:nth-child(5), .zeit-header:nth-child(6) {
+	  background-color: #eaf1fc; /* Tzeentch */
+	}
+	.zeit-header:nth-child(7), .zeit-header:nth-child(8) {
+	  background-color: #e4f2dd; /* Nurgle */
+	}
+	.zeit-header:nth-child(9), .zeit-header:nth-child(10) {
+	  background-color: #e5e5e5; /* Undivided */
+	}
+
+    .slot {
+      background-color: #f8faff;
+      border-radius: 4px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .slot:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+	  gap: 5px;
+    }
+
+    .slot-full {
+      grid-column: 1 / -1;
+    }
+
+    input, select, textarea {
+      width: calc(100% - 0px);
+      font-size: 12px;
+      box-sizing: border-box;
+	  border: 1px solid #bbb; /* hellere, subtilere Rahmenfarbe */
+	  border-radius: 4px;     /* leichte Abrundung für sanfteres Aussehen */
+	  background-color: #fff; /* weißer Hintergrund, falls nicht gesetzt */
+	  transition: border-color 0.3s ease;
+    }
+
+    /* Dynamische Farben (durch JS gesteuert – vorbereitend) */
+    .system-40k        { background-color: #D0E0E3; }
+    .system-aos        { background-color: #FFF2CC; }
+    .system-swl        { background-color: #D9D2E9; }
+    .system-kt         { background-color: #CFE2F3; }
+    .system-mittelerde { background-color: #D9EAD3; }
+    .system-oldworld   { background-color: #E6B8AF; }
+    .system-li         { background-color: #D9D9D9; }
+    .system-spearhead  { background-color: #FCE5CD; }
+    .system-necro      { background-color: #F4CCCC; }
+    .system-shatter    { background-color: #EAD1DC; }
+
+    @media (max-width: 768px) {
+      .tab-content {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="tab-buttons" id="tabButtons"></div>
+<div id="kalenderContainer"></div>
+
+<script>
+function createTableForMonth(year, month) {
+  const table = document.createElement("table");
+
+  table.innerHTML += `
+    <tr>
+      <th rowspan="2">Datum</th>
+      <th colspan="2" class="tisch-header">Khorne</th>
+      <th colspan="2" class="tisch-header">Slaanesh</th>
+      <th colspan="2" class="tisch-header">Tzeentch</th>
+      <th colspan="2" class="tisch-header">Nurgle</th>
+      <th colspan="2" class="tisch-header">Undivided</th>
+    </tr>
+    <tr>
+      <th class="zeit-header">8–16 Uhr</th>
+      <th class="zeit-header">16–24 Uhr</th>
+      <th class="zeit-header">8–16 Uhr</th>
+      <th class="zeit-header">16–24 Uhr</th>
+      <th class="zeit-header">8–16 Uhr</th>
+      <th class="zeit-header">16–24 Uhr</th>
+      <th class="zeit-header">8–16 Uhr</th>
+      <th class="zeit-header">16–24 Uhr</th>
+      <th class="zeit-header">8–16 Uhr</th>
+      <th class="zeit-header">16–24 Uhr</th>
+    </tr>
+  `;
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const localeOpts = { weekday: "long", month: "long" };
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateObj = new Date(year, month, day);
+    const weekday = dateObj.toLocaleDateString("de-DE", { weekday: "long" });
+    const monthName = dateObj.toLocaleDateString("de-DE", { month: "long" });
+    const dateLabel = `${weekday}<br>${day}. ${monthName}`;
+
+    const row = document.createElement("tr");
+
+    // Datumsspalte
+    const dateCell = document.createElement("td");
+    dateCell.innerHTML = dateLabel;
+    row.appendChild(dateCell);
+
+    // 10 Slot-Zellen erzeugen und anhängen
+    for (let i = 0; i < 10; i++) {
+      row.appendChild(generateSlotCell());
+    }
+
+    table.appendChild(row);
+  }
+
+  return table;
+}
+
+function generateSlotCell() {
+  const cell = document.createElement("td");
+  cell.className = "slot";
+  const wrapper = document.createElement("div");
+  wrapper.className = "slot-grid";
+
+  // Spieler 1 & 2
+  wrapper.innerHTML = `
+    <input type="text" placeholder="Player 1">
+    <input type="text" placeholder="Player 2">
+    <input type="time">
+    <select class="system-select">
+      <option value="">System</option>
+      <option value="40k">40k</option>
+      <option value="AoS">AoS</option>
+      <option value="SWL">SWL</option>
+      <option value="Kill Team">Kill Team</option>
+      <option value="Mittelerde">Mittelerde</option>
+      <option value="Old World">Old World</option>
+      <option value="Legion Imperialis">Legion Imperialis</option>
+      <option value="Spearhead">Spearhead</option>
+      <option value="Necromunda">Necromunda</option>
+      <option value="Shatterpoint">Shatterpoint</option>
+    </select>
+    <textarea class="slot-full" placeholder="Bemerkung"></textarea>
+  `;
+
+  cell.appendChild(wrapper);
+
+  // Eventlistener für dynamische Farbe
+  const select = wrapper.querySelector("select");
+
+  const systemClassMap = {
+    "40k": "system-40k",
+    "aos": "system-aos",
+    "swl": "system-swl",
+    "killteam": "system-kt",
+    "mittelerde": "system-mittelerde",
+    "oldworld": "system-oldworld",
+    "legionimperialis": "system-li",
+    "spearhead": "system-spearhead",
+    "necromunda": "system-necro",
+    "shatterpoint": "system-shatter"
+  };
+
+  select.addEventListener("change", () => {
+    const val = select.value.trim().toLowerCase().replace(/\s+/g, '');
+    const container = select.closest(".slot");
+    container.className = "slot"; // Reset
+
+    const className = systemClassMap[val];
+    if (className) {
+      container.classList.add(className);
+    } else {
+      console.warn("Kein Mapping für:", val);
+    }
+  });
+
+  return cell;
+}
+
+function buildTabs() {
+  const container = document.getElementById("kalenderContainer");
+  const buttonsContainer = document.getElementById("tabButtons");
+  const today = new Date();
+
+  for (let i = 0; i < 3; i++) {
+    const currentMonth = today.getMonth() + i;
+    const year = today.getFullYear() + Math.floor(currentMonth / 12);
+    const month = currentMonth % 12;
+    const monthName = new Date(year, month).toLocaleString("de-DE", { month: "long", year: "numeric" });
+
+    const tabId = `tab-${year}-${month}`;
+    
+    const btn = document.createElement("button");
+    btn.textContent = monthName;
+    btn.dataset.target = tabId;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".tab-buttons button").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      btn.classList.add("active");
+    });
+    buttonsContainer.appendChild(btn);
+
+    const tab = document.createElement("div");
+    tab.className = "tab-content";
+    tab.id = tabId;
+    tab.appendChild(createTableForMonth(year, month));
+    container.appendChild(tab);
+
+    if (i === 0) {
+      btn.classList.add("active");
+      tab.classList.add("active");
+    }
+  }
+}
+
+buildTabs();
+</script>
+
+</body>
+</html>
