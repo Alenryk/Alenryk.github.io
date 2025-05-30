@@ -212,23 +212,28 @@ function generateSlotCell() {
 
   // Spieler 1 & 2
   wrapper.innerHTML = `
-    <input type="text" placeholder="Player 1">
-    <input type="text" placeholder="Player 2">
-    <input type="time">
-    <select class="system-select">
-      <option value="">System</option>
-      <option value="40k">40k</option>
-      <option value="AoS">AoS</option>
-      <option value="SWL">SWL</option>
-      <option value="Kill Team">Kill Team</option>
-      <option value="Mittelerde">Mittelerde</option>
-      <option value="Old World">Old World</option>
-      <option value="Legion Imperialis">Legion Imperialis</option>
-      <option value="Spearhead">Spearhead</option>
-      <option value="Necromunda">Necromunda</option>
-      <option value="Shatterpoint">Shatterpoint</option>
-    </select>
-    <textarea class="slot-full" placeholder="Bemerkung"></textarea>
+    <div class="slot-collapsed">
+      <button class="slot-expand-btn">➕ Slot bearbeiten</button>
+    </div>
+    <div class="slot-expanded" style="display:none;">
+      <input type="text" placeholder="Spieler 1">
+      <input type="text" placeholder="Spieler 2">
+      <input type="time">
+      <select class="system-select">
+        <option value="">– Spielsystem –</option>
+        <option value="40k">40k</option>
+        <option value="AoS">AoS</option>
+        <option value="SWL">SWL</option>
+        <option value="Kill Team">Kill Team</option>
+        <option value="Mittelerde">Mittelerde</option>
+        <option value="Old World">Old World</option>
+        <option value="Legion Imperialis">Legion Imperialis</option>
+        <option value="Spearhead">Spearhead</option>
+        <option value="Necromunda">Necromunda</option>
+        <option value="Shatterpoint">Shatterpoint</option>
+      </select>
+      <textarea class="slot-full" placeholder="Bemerkung"></textarea>
+    </div>
   `;
 
   cell.appendChild(wrapper);
