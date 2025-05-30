@@ -212,10 +212,6 @@ function generateSlotCell() {
 
   // Spieler 1 & 2
   wrapper.innerHTML = `
-    <div class="slot-collapsed">
-      <button class="slot-expand-btn">➕ Slot bearbeiten</button>
-    </div>
-    <div class="slot-expanded" style="display:none;">
       <input type="text" placeholder="Spieler 1">
       <input type="text" placeholder="Spieler 2">
       <input type="time">
@@ -233,7 +229,6 @@ function generateSlotCell() {
         <option value="Shatterpoint">Shatterpoint</option>
       </select>
       <textarea class="slot-full" placeholder="Bemerkung"></textarea>
-    </div>
   `;
 
   cell.appendChild(wrapper);
