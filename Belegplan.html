@@ -158,6 +158,22 @@
     .system-spearhead  { background-color: #FCE5CD; }
     .system-necro      { background-color: #F4CCCC; }
     .system-shatter    { background-color: #EAD1DC; }
+	
+	/* Basis-Hervorhebung für Zeilen und Spalten */
+	.highlight-row {
+	  background-color: rgba(173, 216, 230, 0.5); /* Pastellblau für Zeilen */
+	}
+
+	.highlight-column {
+	  background-color: rgba(240, 230, 140, 0.5); /* Pastellgelb für Spalten */
+	}
+
+	/* Spezielle Hervorhebung für die Kreuzungszelle */
+	.highlight-intersection {
+	  background-color: rgba(255, 182, 193, 0.8); /* Pastellrosa für die Kreuzung */
+	  font-weight: bold;
+	  border: 2px solid #ff69b4; /* Leicht stärkerer Rand für die Kreuzung */
+	}
 
     @media (max-width: 768px) {
       .tab-content {
@@ -329,6 +345,64 @@ function buildTabs() {
     }
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const table = document.querySelector("table");
+
+  // Event-Listener für Datum-Zellen
+  document.querySelectorAll("table td:first-child, table th:first-child").forEach((cell, rowIndex) => {
+    cell.addEventListener("click", () => {
+      const activeColumn = document.querySelector(".highlight-column"); // Prüfe, ob eine Spalte aktiv ist
+      const colIndex = activeColumn ? Array.from(activeColumn.parentElement.children).indexOf(activeColumn) : null;
+	  console.log("Zeile: " + rowIndex + " | Spalte: " + colIndex);
+      highlightCross(rowIndex, colIndex+1); // Markiere Kreuzung mit aktueller Spalte
+    });
+  });
+
+  // Event-Listener für Zeit-Zellen
+  document.querySelectorAll("thead tr:nth-child(2) th").forEach((cell, colIndex) => {
+    cell.addEventListener("click", () => {
+      const activeRow = document.querySelector(".highlight-row"); // Prüfe, ob eine Zeile aktiv ist
+      const rowIndex = activeRow ? Array.from(activeRow.parentElement.parentElement.children).indexOf(activeRow.parentElement) : null;
+	  console.log("Zeile: " + rowIndex + " | Spalte: " + colIndex);
+      highlightCross(rowIndex, colIndex+2); // Markiere Kreuzung mit aktueller Zeile
+    });
+  });
+  
+  // Funktion für Kreuz-Markierung
+  function highlightCross(rowIndex, colIndex) {
+    console.log(rowIndex + " | " + colIndex);
+    // Alte Hervorhebungen entfernen
+    document.querySelectorAll(".highlight-row, .highlight-column, .highlight-intersection").forEach(cell => {
+      cell.classList.remove("highlight-row", "highlight-column", "highlight-intersection");
+    });
+
+    // Wenn `rowIndex` gesetzt ist, markiere die Zeile
+    if (rowIndex !== null) {
+      table.querySelectorAll(`tr:nth-child(${rowIndex}) td, tr:nth-child(${rowIndex}) th`).forEach(cell => {
+        cell.classList.add("highlight-row");
+      });
+    }
+
+    // Wenn `colIndex` gesetzt ist, markiere die Spalte
+    if (colIndex !== null) {
+      table.querySelectorAll(`tr td:nth-child(${colIndex}), tr th:nth-child(${colIndex})`).forEach(cell => {
+        cell.classList.add("highlight-column");
+      });
+    }
+
+    // Wenn beide gesetzt sind, markiere die Kreuzung
+    if (rowIndex !== null && colIndex !== null) {
+      const intersectionCell = table.rows[rowIndex].cells[colIndex-1];
+      if (intersectionCell) {
+        intersectionCell.classList.add("highlight-intersection");
+      }
+    }
+  }
+});
+
+
+
 
 buildTabs();
 </script>
