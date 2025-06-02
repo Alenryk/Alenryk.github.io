@@ -365,7 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const activeRow = document.querySelector(".highlight-row"); // Prüfe, ob eine Zeile aktiv ist
       const rowIndex = activeRow ? Array.from(activeRow.parentElement.parentElement.children).indexOf(activeRow.parentElement) : null;
 	  console.log("Zeile: " + rowIndex + " | Spalte: " + colIndex);
-      highlightCross(rowIndex, colIndex+2); // Markiere Kreuzung mit aktueller Zeile
+      highlightCross(rowIndex+1, colIndex+2); // Markiere Kreuzung mit aktueller Zeile
     });
   });
   
